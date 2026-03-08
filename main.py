@@ -14,7 +14,6 @@ st.set_page_config(page_title="Ciberv31 Shadow", page_icon="", layout="wide")
 
 class Ciberv31Shadow:
     def __init__(self, proxy=None):
-        # Lista manual de User-Agents para estabilidade total
         self.ua_list = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
@@ -38,12 +37,24 @@ class Ciberv31Shadow:
         return opts
 
     def run_session(self, url):
+        driver = None
         try:
-            # Caminho obrigatório para o Streamlit Cloud
-            service = Service("/usr/bin/chromedriver")
-            driver = webdriver.Chrome(service=service, options=self._set_options())
+            opts = self._set_options()
+            # Tenta caminhos diferentes para o Chromium no Streamlit Cloud
+            paths = ["/usr/bin/chromium", "/usr/bin/chromium-browser"]
             
-            # Evasão de detecção (Stealth)
+            success = False
+            for path in paths:
+                try:
+                    service = Service(path)
+                    driver = webdriver.Chrome(service=service, options=opts)
+                    success = True
+                    break
+                except: continue
+            
+            if not success:
+                driver = webdriver.Chrome(options=opts)
+            
             driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
                 "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             })
@@ -51,7 +62,6 @@ class Ciberv31Shadow:
             driver.get(url)
             time.sleep(random.uniform(5, 10))
             
-            # Persistência de Sessão
             if os.path.exists(self.cookie_file):
                 with open(self.cookie_file, 'r') as f:
                     for c in json.load(f):
@@ -69,8 +79,9 @@ class Ciberv31Shadow:
         except Exception as e:
             return {"status": "Erro", "msg": str(e)}
         finally:
-            try: driver.quit()
-            except: pass
+            if driver:
+                try: driver.quit()
+                except: pass
 
 # --- UI INTERFACE ---
 st.title(" Ciberv31 Shadow Framework")
@@ -87,7 +98,6 @@ if st.button(" INICIAR SHADOW BYPASS"):
         else:
             st.error(f"Falha Técnica: {res['msg']}")
 
-# Ferramentas de Auditoria
 col1, col2 = st.columns(2)
 with col1:
     if st.button(" SCAN HEADERS"):
