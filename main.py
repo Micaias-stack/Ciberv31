@@ -14,6 +14,7 @@ st.set_page_config(page_title="Ciberv31 Shadow", page_icon="", layout="wide")
 
 class Ciberv31Shadow:
     def __init__(self, proxy=None):
+        # Lista manual de User-Agents para estabilidade total
         self.ua_list = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
@@ -29,6 +30,10 @@ class Ciberv31Shadow:
         opts.add_argument(f"--user-agent={random.choice(self.ua_list)}")
         opts.add_argument("--disable-blink-features=AutomationControlled")
         
+        # AJUSTE DE RESOLUÇÃO: Garante que o site renderize links e imagens
+        opts.add_argument("--window-size=1920,1080")
+        opts.add_argument("--start-maximized")
+        
         if self.proxy:
             try:
                 ip, porta, user, pwd = self.proxy.split(':')
@@ -40,7 +45,7 @@ class Ciberv31Shadow:
         driver = None
         try:
             opts = self._set_options()
-            # Tenta caminhos diferentes para o Chromium no Streamlit Cloud
+            # Caminhos para o Chromium no Streamlit Cloud
             paths = ["/usr/bin/chromium", "/usr/bin/chromium-browser"]
             
             success = False
@@ -55,12 +60,15 @@ class Ciberv31Shadow:
             if not success:
                 driver = webdriver.Chrome(options=opts)
             
+            # Evasão de detecção (Stealth)
             driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
                 "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             })
             
             driver.get(url)
-            time.sleep(random.uniform(5, 10))
+            
+            # TEMPO DE ESPERA AUMENTADO: Para carregar conteúdos dinâmicos e links
+            time.sleep(random.uniform(15, 25)) 
             
             if os.path.exists(self.cookie_file):
                 with open(self.cookie_file, 'r') as f:
@@ -68,6 +76,7 @@ class Ciberv31Shadow:
                         try: driver.add_cookie(c)
                         except: pass
                 driver.refresh()
+                time.sleep(5)
 
             driver.save_screenshot("shadow_session.png")
             with open(self.cookie_file, 'w') as f:
@@ -90,7 +99,7 @@ proxy_addr = "91.123.10.151:6693:flashproxys718:nosindique777"
 
 if st.button(" INICIAR SHADOW BYPASS"):
     shadow = Ciberv31Shadow(proxy_addr)
-    with st.spinner("Executando Protocolo de Evasão..."):
+    with st.spinner("Executando Protocolo de Evasão Profunda..."):
         res = shadow.run_session(target)
         if res["status"] == "Ativo":
             st.success(f"Conexão Ativa em: {res['url']}")
@@ -98,6 +107,7 @@ if st.button(" INICIAR SHADOW BYPASS"):
         else:
             st.error(f"Falha Técnica: {res['msg']}")
 
+# Ferramentas de Auditoria
 col1, col2 = st.columns(2)
 with col1:
     if st.button(" SCAN HEADERS"):
