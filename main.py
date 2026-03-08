@@ -7,9 +7,10 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import WebDriverException
 
 # Configuração Profissional
-st.set_page_config(page_title="Ciberv31 Shadow", page_icon="👤", layout="wide")
+st.set_page_config(page_title="Ciberv31 Shadow", page_icon="", layout="wide")
 
 class Ciberv31Shadow:
     def __init__(self, proxy=None):
@@ -63,6 +64,8 @@ class Ciberv31Shadow:
                 json.dump(driver.get_cookies(), f)
                 
             return {"status": "Ativo", "img": "shadow_session.png", "url": driver.current_url}
+        except WebDriverException as e:
+            return {"status": "Erro", "msg": f"Erro no WebDriver: {str(e)}"}
         except Exception as e:
             return {"status": "Erro", "msg": str(e)}
         finally:
@@ -70,11 +73,11 @@ class Ciberv31Shadow:
             except: pass
 
 # --- UI INTERFACE ---
-st.title("👤 Ciberv31 Shadow Framework")
+st.title(" Ciberv31 Shadow Framework")
 target = st.text_input("URL Alvo:", value="https://superbet.bet.br")
 proxy_addr = "91.123.10.151:6693:flashproxys718:nosindique777"
 
-if st.button("🚀 INICIAR SHADOW BYPASS"):
+if st.button(" INICIAR SHADOW BYPASS"):
     shadow = Ciberv31Shadow(proxy_addr)
     with st.spinner("Executando Protocolo de Evasão..."):
         res = shadow.run_session(target)
@@ -87,11 +90,14 @@ if st.button("🚀 INICIAR SHADOW BYPASS"):
 # Ferramentas de Auditoria
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("🔍 SCAN HEADERS"):
-        r = requests.get(target)
-        st.json(dict(r.headers))
+    if st.button(" SCAN HEADERS"):
+        try:
+            r = requests.get(target)
+            st.json(dict(r.headers))
+        except Exception as e:
+            st.error(f"Erro ao scanear headers: {str(e)}")
 with col2:
-    if st.button("🧹 CLEAN VAULT"):
+    if st.button(" CLEAN VAULT"):
         if os.path.exists("session_vault.json"):
             os.remove("session_vault.json")
             st.warning("Cookies removidos.")
