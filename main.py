@@ -1,0 +1,97 @@
+import streamlit as st
+import time
+import random
+import json
+import os
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+
+# Configuração Profissional
+st.set_page_config(page_title="Ciberv31 Shadow", page_icon="👤", layout="wide")
+
+class Ciberv31Shadow:
+    def __init__(self, proxy=None):
+        # Lista manual de User-Agents para estabilidade total
+        self.ua_list = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        ]
+        self.proxy = proxy
+        self.cookie_file = "session_vault.json"
+
+    def _set_options(self):
+        opts = Options()
+        opts.add_argument("--headless=new")
+        opts.add_argument("--no-sandbox")
+        opts.add_argument("--disable-dev-shm-usage")
+        opts.add_argument(f"--user-agent={random.choice(self.ua_list)}")
+        opts.add_argument("--disable-blink-features=AutomationControlled")
+        
+        if self.proxy:
+            try:
+                ip, porta, user, pwd = self.proxy.split(':')
+                opts.add_argument(f'--proxy-server={ip}:{porta}')
+            except: pass
+        return opts
+
+    def run_session(self, url):
+        try:
+            # Caminho obrigatório para o Streamlit Cloud
+            service = Service("/usr/bin/chromedriver")
+            driver = webdriver.Chrome(service=service, options=self._set_options())
+            
+            # Evasão de detecção (Stealth)
+            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            })
+            
+            driver.get(url)
+            time.sleep(random.uniform(5, 10))
+            
+            # Persistência de Sessão
+            if os.path.exists(self.cookie_file):
+                with open(self.cookie_file, 'r') as f:
+                    for c in json.load(f):
+                        try: driver.add_cookie(c)
+                        except: pass
+                driver.refresh()
+
+            driver.save_screenshot("shadow_session.png")
+            with open(self.cookie_file, 'w') as f:
+                json.dump(driver.get_cookies(), f)
+                
+            return {"status": "Ativo", "img": "shadow_session.png", "url": driver.current_url}
+        except Exception as e:
+            return {"status": "Erro", "msg": str(e)}
+        finally:
+            try: driver.quit()
+            except: pass
+
+# --- UI INTERFACE ---
+st.title("👤 Ciberv31 Shadow Framework")
+target = st.text_input("URL Alvo:", value="https://superbet.bet.br")
+proxy_addr = "91.123.10.151:6693:flashproxys718:nosindique777"
+
+if st.button("🚀 INICIAR SHADOW BYPASS"):
+    shadow = Ciberv31Shadow(proxy_addr)
+    with st.spinner("Executando Protocolo de Evasão..."):
+        res = shadow.run_session(target)
+        if res["status"] == "Ativo":
+            st.success(f"Conexão Ativa em: {res['url']}")
+            st.image(res["img"])
+        else:
+            st.error(f"Falha Técnica: {res['msg']}")
+
+# Ferramentas de Auditoria
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("🔍 SCAN HEADERS"):
+        r = requests.get(target)
+        st.json(dict(r.headers))
+with col2:
+    if st.button("🧹 CLEAN VAULT"):
+        if os.path.exists("session_vault.json"):
+            os.remove("session_vault.json")
+            st.warning("Cookies removidos.")
